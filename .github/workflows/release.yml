@@ -50,8 +50,8 @@ jobs:
           ref="${{ github.ref_type == 'tag' && github.ref_name || 'main' }}"
           for r in loom opendb char sta-si extract em-ir power thermal lvs resize vt-swap buffer-insert \
                    hold-fix drc cdc glitch gds-view remap meas ant stt est \
-                   lec mpl ifp tap pdn ppl pad fin gpl rsz dpl cts grt drt \
-                   abc-lib events geom layout opendb-lib ortools-lib par sta; do
+                   lec mpl ifp tap pdn ppl pad fin gpl rsz dpl cts grt drt rmp syn \
+                   abc-lib slang-lib events geom layout opendb-lib ortools-lib par sta; do
             git clone -q --depth 1 --branch "$ref" "https://github.com/vyges-tools/$r" "vyges-tools-$r"
             echo "vyges-tools-$r @ $ref $(git -C vyges-tools-$r rev-parse --short HEAD)"
           done
@@ -66,13 +66,14 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install cmake boost bison
 
-      # The prebuilt solver archives the physical engines link (lec: ABC; mpl: the partitioner's
-      # solver), for the abc-lib / ortools-lib checked out above.
+      # The prebuilt archives the physical engines link (lec, rmp, syn: ABC; mpl: the
+      # partitioner's solver; syn: the SystemVerilog frontend), for the checkouts above.
       - name: Prebuilt solver archives (physical)
         if: matrix.bin == 'physical'
         run: |
           bash ../vyges-tools-abc-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/abc" >> "$GITHUB_ENV"
           bash ../vyges-tools-ortools-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/ortools" >> "$GITHUB_ENV"
+          bash ../vyges-tools-slang-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/slang" >> "$GITHUB_ENV"
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -114,6 +115,8 @@ jobs:
             cp "$VYGES_ABC_PREBUILT_DIR/NOTICE" "$STAGE/notices/NOTICE-abc" 2>/dev/null || true
             cp -R "$VYGES_ORTOOLS_PREBUILT_DIR/licenses" "$STAGE/notices/licenses-ortools" 2>/dev/null || true
             cp "$VYGES_ORTOOLS_PREBUILT_DIR/NOTICE" "$STAGE/notices/NOTICE-ortools" 2>/dev/null || true
+            cp -R "$VYGES_SLANG_PREBUILT_DIR/licenses" "$STAGE/notices/licenses-slang" 2>/dev/null || true
+            cp "$VYGES_SLANG_PREBUILT_DIR/NOTICE" "$STAGE/notices/NOTICE-slang" 2>/dev/null || true
           fi
           tar -C "$RUNNER_TEMP" -czf "$GITHUB_WORKSPACE/$NAME.tar.gz" "$NAME"
           ( cd "$GITHUB_WORKSPACE" && shasum -a 256 "$NAME.tar.gz" > "$NAME.tar.gz.sha256" )

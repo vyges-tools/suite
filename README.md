@@ -24,8 +24,8 @@ cargo build --release --features loom --bin vyges-loom
 cargo build --release --features physical --bin vyges-physical
 ```
 
-`vyges-physical` links the prebuilt solver archives its engines use; see
-`.github/workflows/release.yml` for how they are fetched.
+`vyges-physical` links the prebuilt archives its engines use (ABC, the partitioner's solver, the
+SystemVerilog frontend); see `.github/workflows/release.yml` for how they are fetched.
 
 ## License
 
