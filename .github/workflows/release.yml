@@ -1,0 +1,136 @@
+# SPDX-License-Identifier: Apache-2.0
+# Release the two suite binaries, `vyges-loom` and `vyges-physical`.
+#
+# Produces vyges-<binary>-<rust-triple>.tar.gz, the asset `vyges install loom|physical` fetches:
+# one binary, which the installer links every engine's name to.
+#
+# Every engine (and the libraries they share) is built from a sibling checkout AT THE RELEASE TAG,
+# so a binary carries exactly the sources released under that tag. release-suite.sh tags this
+# repo after every engine, so the tag exists in each sibling when this runs.
+#
+# Unix-only and native per target, as the engines that link the design database are.
+#
+# Trigger: push a tag `v*` (publishes a Release), or run manually against `main` to smoke the build
+# (workflow_dispatch uploads artifacts only, no Release).
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.bin }} ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: vyges-tools-suite
+    strategy:
+      fail-fast: false
+      matrix:
+        bin: [loom, physical]
+        target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, aarch64-apple-darwin]
+        include:
+          - { target: x86_64-unknown-linux-gnu,  os: ubuntu-latest }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm }
+          - { target: aarch64-apple-darwin,      os: macos-15 }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: vyges-tools-suite
+
+      - name: Sibling checkouts at the release ref
+        working-directory: .
+        run: |
+          set -eu
+          ref="${{ github.ref_type == 'tag' && github.ref_name || 'main' }}"
+          for r in loom opendb char sta-si extract em-ir power thermal lvs resize vt-swap buffer-insert \
+                   hold-fix drc cdc glitch gds-view remap meas ant stt est \
+                   lec mpl ifp tap pdn ppl pad fin gpl rsz dpl cts grt drt \
+                   abc-lib events geom layout opendb-lib ortools-lib par sta; do
+            git clone -q --depth 1 --branch "$ref" "https://github.com/vyges-tools/$r" "vyges-tools-$r"
+            echo "vyges-tools-$r @ $ref $(git -C vyges-tools-$r rev-parse --short HEAD)"
+          done
+
+      - name: Toolchain (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ git bison libboost-dev libboost-iostreams-dev libbz2-dev zlib1g-dev
+
+      - name: Toolchain (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake boost bison
+
+      # The prebuilt solver archives the physical engines link (lec: ABC; mpl: the partitioner's
+      # solver), for the abc-lib / ortools-lib checked out above.
+      - name: Prebuilt solver archives (physical)
+        if: matrix.bin == 'physical'
+        run: |
+          bash ../vyges-tools-abc-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/abc" >> "$GITHUB_ENV"
+          bash ../vyges-tools-ortools-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/ortools" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: |
+          [ "${{ runner.os }}" = "macOS" ] && export PATH="$(brew --prefix bison)/bin:$PATH"
+          cargo build --release --features ${{ matrix.bin }} --bin vyges-${{ matrix.bin }}
+
+      - name: Smoke (every engine answers --version under its own name)
+        run: |
+          set -eu
+          b="target/release/vyges-${{ matrix.bin }}"
+          d="$RUNNER_TEMP/smoke"; mkdir -p "$d"
+          for e in $("$b" --suite-engines); do
+            ln -sf "$PWD/$b" "$d/vyges-$e"
+            "$d/vyges-$e" --version >/dev/null 2>&1 || "$d/vyges-$e" --help >/dev/null 2>&1 \
+              || { echo "::error::vyges-$e answers neither --version nor --help"; exit 1; }
+          done
+
+      - name: Package vyges-${{ matrix.bin }}-${{ matrix.target }}.tar.gz
+        id: pkg
+        run: |
+          set -eu
+          NAME="vyges-${{ matrix.bin }}-${{ matrix.target }}"
+          STAGE="$RUNNER_TEMP/$NAME"
+          mkdir -p "$STAGE/notices"
+          cp "target/release/vyges-${{ matrix.bin }}" "$STAGE/"
+          cp LICENSE NOTICE README.md "$STAGE/"
+          for e in $("target/release/vyges-${{ matrix.bin }}" --suite-engines); do
+            mkdir -p "$STAGE/notices/$e"
+            for f in LICENSE NOTICE THIRD_PARTY_LICENSES.md; do
+              [ -f "../vyges-tools-$e/$f" ] && cp "../vyges-tools-$e/$f" "$STAGE/notices/$e/"
+            done
+          done
+          if [ "${{ matrix.bin }}" = physical ]; then
+            cp -R "$VYGES_ABC_PREBUILT_DIR/licenses" "$STAGE/notices/licenses-abc" 2>/dev/null || true
+            cp "$VYGES_ABC_PREBUILT_DIR/NOTICE" "$STAGE/notices/NOTICE-abc" 2>/dev/null || true
+            cp -R "$VYGES_ORTOOLS_PREBUILT_DIR/licenses" "$STAGE/notices/licenses-ortools" 2>/dev/null || true
+            cp "$VYGES_ORTOOLS_PREBUILT_DIR/NOTICE" "$STAGE/notices/NOTICE-ortools" 2>/dev/null || true
+          fi
+          tar -C "$RUNNER_TEMP" -czf "$GITHUB_WORKSPACE/$NAME.tar.gz" "$NAME"
+          ( cd "$GITHUB_WORKSPACE" && shasum -a 256 "$NAME.tar.gz" > "$NAME.tar.gz.sha256" )
+          echo "asset=$NAME.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.pkg.outputs.asset }}
+          path: |
+            ${{ steps.pkg.outputs.asset }}
+            ${{ steps.pkg.outputs.asset }}.sha256
+          if-no-files-found: error
+
+      - name: Attach to Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            ${{ steps.pkg.outputs.asset }}
+            ${{ steps.pkg.outputs.asset }}.sha256
