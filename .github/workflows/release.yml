@@ -11,13 +11,19 @@
 # Unix-only and native per target, as the engines that link the design database are.
 #
 # Trigger: push a tag `v*` (publishes a Release), or run manually against `main` to smoke the build
-# (workflow_dispatch uploads artifacts only, no Release).
+# (workflow_dispatch uploads artifacts only, no Release). A manual run WITH `tag` rebuilds that
+# release from the siblings at that tag and replaces its assets — the way to repair a published
+# release without moving its tag.
 name: release
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to rebuild and re-attach (e.g. v0.1.47); empty = smoke only"
+        required: false
 
 permissions:
   contents: write
@@ -35,7 +41,10 @@ jobs:
         bin: [loom, physical]
         target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, aarch64-apple-darwin]
         include:
-          - { target: x86_64-unknown-linux-gnu,  os: ubuntu-latest }
+          # ⛔ Pinned, never ubuntu-latest: that label rolled to 26.04 and v0.1.47's vyges-physical
+          # came out needing GLIBC_2.43, which a 24.04 host cannot load — its --suite-engines
+          # failed and the installer fell back to the per-engine assets.
+          - { target: x86_64-unknown-linux-gnu,  os: ubuntu-24.04 }
           - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm }
           - { target: aarch64-apple-darwin,      os: macos-15 }
     steps:
@@ -47,7 +56,7 @@ jobs:
         working-directory: .
         run: |
           set -eu
-          ref="${{ github.ref_type == 'tag' && github.ref_name || 'main' }}"
+          ref="${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || 'main' }}"
           for r in loom opendb char sta-si extract em-ir power thermal lvs resize vt-swap buffer-insert \
                    hold-fix drc cdc glitch gds-view remap meas ant stt est \
                    lec mpl ifp tap pdn ppl pad fin gpl rsz dpl cts grt drt rmp syn psm upf dft \
@@ -95,6 +104,17 @@ jobs:
               || { echo "::error::vyges-$e answers neither --version nor --help"; exit 1; }
           done
 
+      # The installer runs `--suite-engines` on the host it installs to; a binary that needs a newer
+      # glibc than the oldest supported host (Ubuntu 24.04, 2.39) cannot answer it there.
+      - name: glibc ceiling (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          set -eu
+          need=$(objdump -T "target/release/vyges-${{ matrix.bin }}" | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -Vu | tail -1)
+          echo "needs GLIBC_$need"
+          [ "$(printf '%s\n2.39\n' "$need" | sort -V | tail -1)" = 2.39 ] \
+            || { echo "::error::vyges-${{ matrix.bin }} needs GLIBC_$need > 2.39"; exit 1; }
+
       - name: Package vyges-${{ matrix.bin }}-${{ matrix.target }}.tar.gz
         id: pkg
         run: |
@@ -131,9 +151,10 @@ jobs:
           if-no-files-found: error
 
       - name: Attach to Release (tags only)
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: |
             ${{ steps.pkg.outputs.asset }}
             ${{ steps.pkg.outputs.asset }}.sha256
