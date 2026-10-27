@@ -20,6 +20,9 @@ const ENGINES: &[vyges_suite::Engine] = &[
     vyges_suite::engine!("drt", vyges_drt),
     vyges_suite::engine!("rmp", vyges_rmp),
     vyges_suite::engine!("syn", vyges_syn),
+    vyges_suite::engine!("psm", vyges_psm),
+    vyges_suite::engine!("upf", vyges_upf),
+    vyges_suite::engine!("dft", vyges_dft),
 ];
 
 fn main() -> ExitCode {

@@ -50,8 +50,8 @@ jobs:
           ref="${{ github.ref_type == 'tag' && github.ref_name || 'main' }}"
           for r in loom opendb char sta-si extract em-ir power thermal lvs resize vt-swap buffer-insert \
                    hold-fix drc cdc glitch gds-view remap meas ant stt est \
-                   lec mpl ifp tap pdn ppl pad fin gpl rsz dpl cts grt drt rmp syn \
-                   abc-lib slang-lib events geom layout opendb-lib ortools-lib par sta; do
+                   lec mpl ifp tap pdn ppl pad fin gpl rsz dpl cts grt drt rmp syn psm upf dft \
+                   abc-lib slang-lib cut sparselu events geom layout opendb-lib ortools-lib par sta; do
             git clone -q --depth 1 --branch "$ref" "https://github.com/vyges-tools/$r" "vyges-tools-$r"
             echo "vyges-tools-$r @ $ref $(git -C vyges-tools-$r rev-parse --short HEAD)"
           done
