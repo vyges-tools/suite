@@ -5,6 +5,7 @@ use std::process::ExitCode;
 
 const ENGINES: &[vyges_suite::Engine] = &[
     vyges_suite::engine!("lec", vyges_lec),
+    vyges_suite::engine!("formal", vyges_formal),
     vyges_suite::engine!("mpl", vyges_mpl),
     vyges_suite::engine!("ifp", vyges_ifp),
     vyges_suite::engine!("tap", vyges_tap),

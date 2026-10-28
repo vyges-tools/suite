@@ -12,7 +12,7 @@ publish = false
 [features]
 # Each binary's engines, built with their command-line entry (`suite`).
 loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est"]
-physical = ["dep:vyges-lec", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft"]
+physical = ["dep:vyges-lec", "dep:vyges-formal", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft"]
 
 # Every engine from its sibling checkout (the release CI checks each out at the release tag), so
 # a binary is built from exactly the sources released under that tag.
@@ -40,6 +40,7 @@ vyges-ant = { path = "../vyges-tools-ant", optional = true, features = ["suite"]
 vyges-stt = { path = "../vyges-tools-stt", optional = true, features = ["suite"] }
 vyges-est = { path = "../vyges-tools-est", optional = true, features = ["suite"] }
 vyges-lec = { path = "../vyges-tools-lec", optional = true, features = ["suite", "abc"] }
+vyges-formal = { path = "../vyges-tools-formal", optional = true, features = ["suite"] }
 vyges-mpl = { path = "../vyges-tools-mpl", optional = true, features = ["suite", "par"] }
 vyges-ifp = { path = "../vyges-tools-ifp", optional = true, features = ["suite"] }
 vyges-tap = { path = "../vyges-tools-tap", optional = true, features = ["suite"] }
