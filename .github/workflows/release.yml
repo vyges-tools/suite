@@ -41,11 +41,11 @@ jobs:
         bin: [loom, physical]
         target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, aarch64-apple-darwin]
         include:
-          # ⛔ Pinned, never ubuntu-latest: that label rolled to 26.04 and v0.1.47's vyges-physical
-          # came out needing GLIBC_2.43, which a 24.04 host cannot load — its --suite-engines
-          # failed and the installer fell back to the per-engine assets.
-          - { target: x86_64-unknown-linux-gnu,  os: ubuntu-24.04 }
-          - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm }
+          # ⛔ Never ubuntu-latest: that label rolled to 26.04 and v0.1.47's vyges-physical came out
+          # needing GLIBC_2.43, which a 24.04 host cannot load. The Ubuntu version is the org
+          # variable VYGES_UBUNTU_VERSION, the same for every release (vyges-tools/actions).
+          - { target: x86_64-unknown-linux-gnu,  os: "ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}" }
+          - { target: aarch64-unknown-linux-gnu, os: "ubuntu-${{ vars.VYGES_UBUNTU_VERSION || '24.04' }}-arm" }
           - { target: aarch64-apple-darwin,      os: macos-15 }
     steps:
       - uses: actions/checkout@v7
@@ -104,16 +104,13 @@ jobs:
               || { echo "::error::vyges-$e answers neither --version nor --help"; exit 1; }
           done
 
-      # The installer runs `--suite-engines` on the host it installs to; a binary that needs a newer
-      # glibc than the oldest supported host (Ubuntu 24.04, 2.39) cannot answer it there.
-      - name: glibc ceiling (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          set -eu
-          need=$(objdump -T "target/release/vyges-${{ matrix.bin }}" | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -Vu | tail -1)
-          echo "needs GLIBC_$need"
-          [ "$(printf '%s\n2.39\n' "$need" | sort -V | tail -1)" = 2.39 ] \
-            || { echo "::error::vyges-${{ matrix.bin }} needs GLIBC_$need > 2.39"; exit 1; }
+      # Runner and glibc floor, one policy for every release: vyges-tools/actions.
+      - name: glibc ceiling
+        uses: vyges-tools/actions/glibc-ceiling@v1
+        with:
+          runner: ${{ matrix.os }}
+          working-directory: vyges-tools-suite
+          paths: target
 
       - name: Package vyges-${{ matrix.bin }}-${{ matrix.target }}.tar.gz
         id: pkg
