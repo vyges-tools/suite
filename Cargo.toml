@@ -1,6 +1,6 @@
 [package]
 name = "vyges-suite"
-version = "0.1.50"
+version = "0.1.51"
 edition = "2021"
 description = "The Vyges engines as two binaries: vyges-loom (analysis and sign-off) and vyges-physical (physical construction). Each runs the engine it is invoked as."
 license = "Apache-2.0"
