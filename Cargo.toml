@@ -11,7 +11,7 @@ publish = false
 
 [features]
 # Each binary's engines, built with their command-line entry (`suite`).
-loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est"]
+loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est", "dep:vyges-sdc"]
 physical = ["dep:vyges-lec", "dep:vyges-formal", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft"]
 
 # Every engine from its sibling checkout (the release CI checks each out at the release tag), so
@@ -35,6 +35,7 @@ vyges-cdc = { path = "../vyges-tools-cdc", optional = true, features = ["suite"]
 vyges-glitch = { path = "../vyges-tools-glitch", optional = true, features = ["suite"] }
 vyges-gds-view = { path = "../vyges-tools-gds-view", optional = true, features = ["suite"] }
 vyges-remap = { path = "../vyges-tools-remap", optional = true, features = ["suite"] }
+vyges-sdc = { path = "../vyges-tools-sdc", optional = true, features = ["suite"] }
 vyges-meas = { path = "../vyges-tools-meas", optional = true, features = ["suite"] }
 vyges-ant = { path = "../vyges-tools-ant", optional = true, features = ["suite"] }
 vyges-stt = { path = "../vyges-tools-stt", optional = true, features = ["suite"] }
