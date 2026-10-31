@@ -11,8 +11,8 @@ publish = false
 
 [features]
 # Each binary's engines, built with their command-line entry (`suite`).
-loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est", "dep:vyges-sdc"]
-physical = ["dep:vyges-lec", "dep:vyges-formal", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft"]
+loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est"]
+physical = ["dep:vyges-lec", "dep:vyges-formal", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft", "dep:vyges-sdc"]
 
 # Every engine from its sibling checkout (the release CI checks each out at the release tag), so
 # a binary is built from exactly the sources released under that tag.

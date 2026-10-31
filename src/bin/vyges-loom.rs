@@ -26,7 +26,6 @@ const ENGINES: &[vyges_suite::Engine] = &[
     vyges_suite::engine!("ant", vyges_ant),
     vyges_suite::engine!("stt", vyges_stt),
     vyges_suite::engine!("est", vyges_est),
-    vyges_suite::engine!("sdc", vyges_sdc),
 ];
 
 fn main() -> ExitCode {
