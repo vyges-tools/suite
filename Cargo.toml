@@ -131,6 +131,9 @@ vyges-ortools-lib = { path = "../vyges-tools-ortools-lib" }
 [patch."https://github.com/vyges-tools/par"]
 vyges-par = { path = "../vyges-tools-par" }
 
+[patch."https://github.com/vyges-tools/ppl.git"]
+vyges-ppl = { path = "../vyges-tools-ppl" }
+
 [patch."https://github.com/vyges-tools/rsz.git"]
 vyges-rsz = { path = "../vyges-tools-rsz" }
 
