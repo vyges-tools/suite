@@ -79,6 +79,8 @@ jobs:
       # partitioner's solver; syn: the SystemVerilog frontend), for the checkouts above.
       - name: Prebuilt solver archives (physical)
         if: matrix.bin == 'physical'
+        env:
+          GH_TOKEN: ${{ github.token }}   # authenticated bundle download (fetch-bundle.sh)
         run: |
           bash ../vyges-tools-abc-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/abc" >> "$GITHUB_ENV"
           bash ../vyges-tools-ortools-lib/scripts/fetch-bundle.sh "$RUNNER_TEMP/ortools" >> "$GITHUB_ENV"
