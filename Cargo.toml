@@ -11,8 +11,8 @@ publish = false
 
 [features]
 # Each binary's engines, built with their command-line entry (`suite`).
-loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est"]
-physical = ["dep:vyges-lec", "dep:vyges-formal", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft", "dep:vyges-sdc"]
+loom = ["dep:vyges-loom", "dep:vyges-opendb", "dep:vyges-char", "dep:vyges-sta-si", "dep:vyges-extract", "dep:vyges-em-ir", "dep:vyges-power", "dep:vyges-thermal", "dep:vyges-lvs", "dep:vyges-resize", "dep:vyges-vt-swap", "dep:vyges-buffer-insert", "dep:vyges-hold-fix", "dep:vyges-drc", "dep:vyges-cdc", "dep:vyges-glitch", "dep:vyges-gds-view", "dep:vyges-remap", "dep:vyges-meas", "dep:vyges-ant", "dep:vyges-stt", "dep:vyges-est", "dep:mimalloc", "dep:libmimalloc-sys"]
+physical = ["dep:vyges-lec", "dep:vyges-formal", "dep:vyges-mpl", "dep:vyges-ifp", "dep:vyges-tap", "dep:vyges-pdn", "dep:vyges-ppl", "dep:vyges-pad", "dep:vyges-fin", "dep:vyges-gpl", "dep:vyges-rsz", "dep:vyges-dpl", "dep:vyges-cts", "dep:vyges-grt", "dep:vyges-drt", "dep:vyges-rmp", "dep:vyges-syn", "dep:vyges-psm", "dep:vyges-upf", "dep:vyges-dft", "dep:vyges-sdc", "dep:mimalloc", "dep:libmimalloc-sys"]
 
 # Every engine from its sibling checkout (the release CI checks each out at the release tag), so
 # a binary is built from exactly the sources released under that tag.
@@ -61,6 +61,21 @@ vyges-psm = { path = "../vyges-tools-psm", optional = true, features = ["suite"]
 vyges-upf = { path = "../vyges-tools-upf", optional = true, features = ["suite"] }
 vyges-dft = { path = "../vyges-tools-dft", optional = true, features = ["suite"] }
 
+# The binaries' global allocator. The reference build links tcmalloc for all of its code
+# (BUILD.bazel `malloc = @tcmalloc`), not the system allocator; mimalloc measured fastest and
+# smallest of tcmalloc / jemalloc / mimalloc on a like-for-like trial. Pinned exactly, the same
+# pins as every engine: libmimalloc-sys 0.1.44 bundles mimalloc v2 by default (0.1.45 on default
+# to v3).
+mimalloc = { version = "=0.1.48", default-features = false, optional = true }
+libmimalloc-sys = { version = "=0.1.44", default-features = false, optional = true }
+
+# On Linux the allocator also REPLACES malloc/free process-wide (`override`), so the C++ the
+# engines link (the database, the solvers, the frontends) allocates through it too, as the
+# reference's statically linked tcmalloc does for all of its code. Not on macOS, where the system
+# zone allocator is left alone.
+[target.'cfg(target_os = "linux")'.dependencies]
+libmimalloc-sys = { version = "=0.1.44", default-features = false, features = ["override"], optional = true }
+
 [lib]
 name = "vyges_suite"
 path = "src/lib.rs"
@@ -75,7 +90,12 @@ name = "vyges-physical"
 path = "src/bin/vyges-physical.rs"
 required-features = ["physical"]
 
+# The reference is built -O3 with link-time optimisation (Bazel --config=release). LTO and one
+# codegen unit let calls inline across crates; by language rule neither changes a result. Only
+# this manifest's profile applies to the suite binaries: Cargo ignores the engines' own.
 [profile.release]
+lto = "fat"
+codegen-units = 1
 strip = true
 
 # The engines name each other by git URL; every spelling resolves to the same sibling checkout,

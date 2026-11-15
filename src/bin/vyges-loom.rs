@@ -28,6 +28,11 @@ const ENGINES: &[vyges_suite::Engine] = &[
     vyges_suite::engine!("est", vyges_est),
 ];
 
+/// Every engine in this binary allocates through mimalloc, as the reference allocates through the
+/// tcmalloc its Bazel build links (`malloc = @tcmalloc`); see Cargo.toml for the pin.
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 fn main() -> ExitCode {
     vyges_suite::run("vyges-loom", env!("CARGO_PKG_VERSION"), ENGINES, || vyges_suite::report(vyges_loom::cli_main::main()))
 }
